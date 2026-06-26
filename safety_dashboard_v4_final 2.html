@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safety & Environment Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #f0f4f1;
+  --bg2: #ffffff;
+  --bg3: #f5f7f5;
+  --bg4: #e8ece8;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --text: #1e2620;
+  --text2: #4a5c4e;
+  --text3: #7a8f7e;
+  --green: #16a34a;
+  --green2: #15803d;
+  --green-bg: rgba(22,163,74,0.10);
+  --red: #f05252;
+  --red-bg: rgba(240,82,82,0.12);
+  --amber: #fbbf24;
+  --amber-bg: rgba(251,191,36,0.12);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.12);
+  --purple: #a78bfa;
+  --purple-bg: rgba(167,139,250,0.12);
+  --sbp: #16a34a;
+  --smc: #3b82f6;
+  --snp: #ea6600;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', sans-serif;
+}
+* { box-sizing: border-box; margin:0; padding:0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 99px; }
+
+
+/* === TICKER === */
+.safety-ticker {
+  background: linear-gradient(90deg, #15803d, #16a34a, #15803d);
+  color: #fff;
+  padding: 7px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  position: sticky; top: 0; z-index: 100;
+  border-bottom: 2px solid #14532d;
+  box-shadow: 0 2px 8px rgba(21,128,61,0.25);
+}
+.ticker-inner {
+  display: inline-block;
+  animation: ticker-scroll 40s linear infinite;
+}
+.ticker-inner span {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0 2rem;
+}
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* === LAYOUT === */
+.app { display: flex; min-height: 100vh; }
+
+/* === SIDEBAR === */
+.sidebar {
+  width: 230px; flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 0.5px solid var(--border);
+  padding: 1.25rem 0;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.logo-area { padding: 0 1.25rem 1.1rem; border-bottom: 0.5px solid var(--border); margin-bottom: 0.75rem; }
+.logo-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--green-bg); border: 0.5px solid rgba(22,163,74,0.25);
+  border-radius: 8px; padding: 4px 10px; margin-bottom: 8px;
+  font-size: 11px; color: var(--green); font-weight: 600; letter-spacing: 0.04em;
+}
+.logo-title { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.logo-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.nav-section { padding: 0.6rem 1.25rem 0.3rem; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 0.48rem 1.25rem; font-size: 13px; color: var(--text2);
+  cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+  font-family: var(--font); transition: all 0.15s; border-left: 2px solid transparent;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--bg3); color: var(--green); font-weight: 500; border-left: 2px solid var(--green); }
+.nav-item i { font-size: 16px; }
+.sidebar-footer { margin-top: auto; padding: 1rem 1.25rem 0; border-top: 0.5px solid var(--border); }
+.data-note { font-size: 11px; color: var(--text3); display: flex; align-items: flex-start; gap: 5px; line-height: 1.5; }
+
+/* === MAIN === */
+.main { flex: 1; padding: 1.5rem; overflow-x: hidden; }
+
+/* === VIEW === */
+.view { display: none; }
+.view.active { display: block; }
+
+/* === PAGE HEADER === */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+.page-title-block {}
+.page-title { font-size: 20px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.page-sub { font-size: 12px; color: var(--text3); }
+.date-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 500;
+  border: 0.5px solid;
+}
+.chip-today { background: var(--green-bg); color: var(--green); border-color: rgba(22,163,74,0.3); }
+.chip-data { background: var(--amber-bg); color: var(--amber); border-color: rgba(251,191,36,0.3); }
+
+/* === SECTION LABEL === */
+.sec-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text3); margin-bottom: 10px; display: flex; align-items: center; gap: 7px;
+}
+.sec-label::before { content:''; display:block; width:3px; height:14px; border-radius:2px; }
+.sl-green::before { background: var(--green); }
+.sl-blue::before { background: var(--blue); }
+.sl-red::before { background: var(--red); }
+.sl-amber::before { background: var(--amber); }
+.sl-env::before { background: #4ade80; }
+
+/* === KPI STRIP === */
+.kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.kpi-card {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: var(--r-lg); padding: 1rem 1.1rem;
+  position: relative; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.kpi-card:hover { border-color: var(--border2); }
+.kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius: 99px 99px 0 0; }
+.kpi-green::before { background: linear-gradient(90deg, var(--green), #4ade80); }
+.kpi-red::before { background: linear-gradient(90deg, var(--red), #fb7185); }
+.kpi-amber::before { background: linear-gradient(90deg, var(--amber), #fde68a); }
+.kpi-blue::before { background: linear-gradient(90deg, var(--blue), #93c5fd); }
+.kpi-icon { width: 34px; height: 34px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; }
+.kpi-val { font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 2px; }
+.kpi-key { font-size: 11px; color: var(--text3); }
+
+/* === PLANT CARDS === */
+.plant-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+.plant-card {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: var(--r-xl); padding: 1.25rem;
+  position: relative; overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.plant-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+.plant-glow { position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; border-radius: 50%; opacity: 0.12; filter: blur(30px); }
+.plant-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.plant-name-row { display: flex; align-items: center; gap: 7px; }
+.plant-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.plant-lbl { font-size: 16px; font-weight: 700; color: var(--text); }
+.plant-sub { font-size: 11px; color: var(--text3); }
+.ring-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+.ring-wrap canvas { width: 72px !important; height: 72px !important; }
+.ring-pct { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-pct-num { font-size: 14px; font-weight: 700; line-height: 1; }
+.ring-pct-lbl { font-size: 9px; color: var(--text3); }
+.days-block { margin-bottom: 1rem; }
+.days-big { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -1px; }
+.days-unit { font-size: 13px; color: var(--text2); }
+.meta-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 1rem; }
+.meta-cell { background: var(--bg3); border-radius: 8px; padding: 7px 8px; }
+.meta-v { font-size: 14px; font-weight: 600; color: var(--text); }
+.meta-k { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.prog-track { height: 4px; background: var(--bg4); border-radius: 99px; margin-bottom: 10px; }
+.prog-bar { height: 4px; border-radius: 99px; transition: width 0.8s ease; }
+.status-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; }
+.tag-green { background: var(--green-bg); color: var(--green); }
+.tag-red { background: var(--red-bg); color: var(--red); }
+.tag-amber { background: var(--amber-bg); color: var(--amber); }
+.blink { animation: blink 1.8s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* === CHART CARD === */
+.chart-card {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: var(--r-lg); padding: 1.1rem 1.25rem; margin-bottom: 1.5rem;
+}
+.chart-hd { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.chart-sub { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.legend-row { display: flex; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+.leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3); }
+.leg-sq { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+/* === ENV CARDS === */
+.env-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+.env-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--r-lg); padding: 1.1rem; }
+.env-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.env-plant-nm { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.env-badge-zero { background: rgba(74,222,128,0.12); color: #4ade80; font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 99px; border: 0.5px solid rgba(74,222,128,0.2); }
+.env-badge-warn { background: var(--red-bg); color: var(--red); font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 99px; border: 0.5px solid rgba(240,82,82,0.2); }
+.env-zero-num { font-size: 40px; font-weight: 800; color: #4ade80; line-height: 1; }
+.env-zero-lbl { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.env-cat-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 0.5px solid var(--border); font-size: 12px; }
+.env-cat-row:last-child { border-bottom: none; }
+.env-cat-nm { color: var(--text3); display: flex; align-items: center; gap: 5px; }
+
+/* === BOTTOM STRIP === */
+.bot-strip {
+  background: var(--bg2); border: 0.5px solid var(--border);
+  border-radius: var(--r-lg); padding: 1rem 1.25rem;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.bot-item { display: flex; align-items: center; gap: 10px; }
+.bot-icon { width: 34px; height: 34px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.bot-v { font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.bot-k { font-size: 11px; color: var(--text3); }
+.bot-div { width: 0.5px; height: 32px; background: var(--border); }
+
+/* === ACC STATS TABLE === */
+.acc-tbl-wrap { overflow-x: auto; margin-bottom: 1rem; }
+table.acc-tbl { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 480px; }
+table.acc-tbl th { padding: 8px 10px; text-align: center; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 0.5px solid var(--border); background: var(--bg3); }
+table.acc-tbl th:first-child { text-align: left; }
+table.acc-tbl td { padding: 8px 10px; text-align: center; border-bottom: 0.5px solid var(--border); color: var(--text); }
+table.acc-tbl td:first-child { text-align: left; font-weight: 600; }
+table.acc-tbl tr:last-child td { border-bottom: none; }
+table.acc-tbl tr.total-row td { background: var(--bg3); font-size: 11px; color: var(--text3); }
+.tc-zero { color: var(--text3); }
+.tc-red { color: var(--red); font-weight: 700; }
+.tc-amber { color: var(--amber); font-weight: 600; }
+.tc-blue { color: var(--blue); font-weight: 600; }
+.tc-purple { color: var(--purple); font-weight: 600; }
+.tc-grey { color: var(--text2); font-weight: 600; }
+.tc-green { color: var(--green); font-weight: 700; }
+
+
+/* === GLOVE SELECT === */
+.glove-select-wrap { position: relative; display: inline-block; width: 100%; }
+.glove-select-wrap::after {
+  content: '🧤';
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 16px; pointer-events: none; line-height: 1;
+}
+.glove-select-wrap select { padding-right: 36px; appearance: none; -webkit-appearance: none; cursor: pointer; }
+
+/* === FORM === */
+.form-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--r-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.form-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 7px; color: var(--text); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 12px; color: var(--text2); font-weight: 500; }
+input[type="date"], input[type="number"], input[type="text"], select, textarea {
+  border: 0.5px solid var(--border2); border-radius: var(--r-md);
+  padding: 7px 10px; font-size: 13px; font-family: var(--font);
+  background: var(--bg3); color: var(--text); width: 100%; outline: none;
+  transition: border 0.1s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 2px rgba(22,163,74,0.12); }
+textarea { resize: vertical; min-height: 72px; }
+select option { background: #f5f8f5; }
+.info-box { border-radius: var(--r-md); padding: 10px 14px; font-size: 12px; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 8px; }
+.info-amber { background: var(--amber-bg); color: var(--amber); border: 0.5px solid rgba(251,191,36,0.3); }
+.info-blue { background: var(--blue-bg); color: var(--blue); border: 0.5px solid rgba(96,165,250,0.3); }
+.info-green { background: var(--green-bg); color: var(--green); border: 0.5px solid rgba(22,163,74,0.3); }
+.btn { padding: 8px 18px; border-radius: var(--r-md); font-size: 13px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--border2); background: var(--bg3); color: var(--text); font-family: var(--font); transition: background 0.1s; }
+.btn:hover { background: var(--bg4); }
+.btn-primary { background: var(--green); border-color: var(--green); color: #000; font-weight: 600; }
+.btn-primary:hover { background: #15803d; }
+.btn-danger { background: var(--red-bg); border-color: rgba(240,82,82,0.4); color: var(--red); }
+.btn-danger:hover { background: rgba(240,82,82,0.2); }
+.btn-row { display: flex; gap: 8px; align-items: center; margin-top: 1rem; }
+.alert-box { border-radius: var(--r-md); padding: 10px 14px; font-size: 13px; margin-bottom: 0.75rem; display: none; }
+.alert-success { background: var(--green-bg); color: var(--green); border: 0.5px solid rgba(22,163,74,0.3); }
+.alert-danger { background: var(--red-bg); color: var(--red); border: 0.5px solid rgba(240,82,82,0.3); }
+
+/* === LOG === */
+.log-table-wrap { overflow-x: auto; }
+table.log-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.log-tbl th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 0.5px solid var(--border); }
+table.log-tbl td { padding: 8px 10px; border-bottom: 0.5px solid var(--border); color: var(--text); vertical-align: middle; }
+table.log-tbl tr:last-child td { border-bottom: none; }
+table.log-tbl tr:hover td { background: var(--bg3); }
+.badge { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+.badge-lta { background: var(--red-bg); color: var(--red); }
+.badge-open { background: var(--amber-bg); color: var(--amber); }
+.badge-close { background: var(--green-bg); color: var(--green); }
+.empty-row td { text-align: center; color: var(--text3); padding: 2.5rem; }
+
+/* === TARGET FORM === */
+.tgt-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--r-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.tgt-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 7px; color: var(--text); }
+
+@media (max-width: 768px) {
+  .app { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 0.75rem; gap: 4px; }
+  .logo-area { width: 100%; padding-bottom: 0.5rem; }
+  .nav-section { display: none; }
+  .nav-item { padding: 0.4rem 0.75rem; border-radius: var(--r-md); border-left: none !important; font-size: 12px; }
+  .nav-item.active { background: var(--bg3); border: 0.5px solid var(--green) !important; }
+  .sidebar-footer { display: none; }
+  .kpi-strip, .plant-cards, .env-grid { grid-template-columns: 1fr; }
+  .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+  .form-group.full { grid-column: 1; }
+  .bot-strip { flex-direction: column; align-items: flex-start; }
+  .bot-div { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="safety-ticker" role="marquee" aria-label="Safety message ticker">
+  <div class="ticker-inner">
+    <span>🧤&nbsp;ความปลอดภัยเริ่มได้ที่ตัวเรา&nbsp;&nbsp;|&nbsp;&nbsp;SAFETY FIRST&nbsp;&nbsp;|&nbsp;&nbsp;🦺 ใส่ PPE ทุกครั้งก่อนเข้าพื้นที่&nbsp;&nbsp;|&nbsp;&nbsp;⚠️ สังเกตความเสี่ยงรอบตัวคุณ&nbsp;&nbsp;|&nbsp;&nbsp;💪 Zero Accident คือเป้าหมายของเรา&nbsp;&nbsp;|&nbsp;&nbsp;👷 PPE คือเกราะของคุณ สวมใส่ทุกครั้ง&nbsp;&nbsp;|&nbsp;&nbsp;🧤&nbsp;ความปลอดภัยเริ่มได้ที่ตัวเรา&nbsp;&nbsp;|&nbsp;&nbsp;SAFETY FIRST&nbsp;&nbsp;|&nbsp;&nbsp;🦺 ใส่ PPE ทุกครั้งก่อนเข้าพื้นที่&nbsp;&nbsp;|&nbsp;&nbsp;⚠️ สังเกตความเสี่ยงรอบตัวคุณ&nbsp;&nbsp;|&nbsp;&nbsp;💪 Zero Accident คือเป้าหมายของเรา&nbsp;&nbsp;|&nbsp;&nbsp;👷 PPE คือเกราะของคุณ สวมใส่ทุกครั้ง</span>
+  </div>
+</div>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<nav class="sidebar">
+  <div class="logo-area">
+    <div class="logo-badge" style="background:linear-gradient(135deg,rgba(202,138,4,0.15),rgba(234,179,8,0.1));border-color:rgba(202,138,4,0.4);color:#92400e;gap:6px;"><span style="font-size:15px;">🏆</span> เจ้าหน้าที่ความปลอดภัย</div>
+    <div class="logo-title">Safety & Environment<br>Monitoring System</div>
+    <div class="logo-sub">SBP · SMC · SNP</div>
+  </div>
+
+  <div class="nav-section">ภาพรวม</div>
+  <button class="nav-item active" onclick="showView('dashboard')">
+    <i class="ti ti-layout-dashboard" aria-hidden="true"></i> แดชบอร์ด
+  </button>
+
+  <div class="nav-section">บันทึกข้อมูล</div>
+  <button class="nav-item" onclick="showView('lta-form')">
+    <i class="ti ti-alert-triangle" aria-hidden="true"></i> บันทึก LTA / อุบัติเหตุ
+  </button>
+  <button class="nav-item" onclick="showView('acc-form')">
+    <i class="ti ti-notes-medical" aria-hidden="true"></i> MTC / FAC / Near Miss
+  </button>
+  <button class="nav-item" onclick="showView('env-form')">
+    <i class="ti ti-message-report" aria-hidden="true"></i> ข้อร้องเรียนสิ่งแวดล้อม
+  </button>
+  <button class="nav-item" onclick="showView('target-form')">
+    <i class="ti ti-target" aria-hidden="true"></i> ตั้งเป้าหมาย / โรงงาน
+  </button>
+
+  <div class="nav-section">ประวัติ</div>
+  <button class="nav-item" onclick="showView('log')">
+    <i class="ti ti-list-details" aria-hidden="true"></i> ประวัติเหตุการณ์
+  </button>
+
+  <div class="sidebar-footer">
+    <div class="data-note">
+      <i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0;margin-top:1px;" aria-hidden="true"></i>
+      <span>รายงาน Today — ใช้ข้อมูลของเมื่อวาน (Yesterday's data)</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+
+<!-- ============ DASHBOARD ============ -->
+<div id="view-dashboard" class="view active">
+  <div class="page-header">
+    <div class="page-title-block">
+      <div class="page-title">
+        <i class="ti ti-shield-check" style="color:var(--green);" aria-hidden="true"></i>
+        Safety & Environment Report
+      </div>
+      <div class="page-sub">รายงานประจำวัน — Daily Safety Report</div>
+    </div>
+    <div class="date-chips">
+      <span class="chip chip-today"><i class="ti ti-calendar" style="font-size:12px;" aria-hidden="true"></i> <span id="chip-today"></span></span>
+      <span class="chip chip-data"><i class="ti ti-database" style="font-size:12px;" aria-hidden="true"></i> ข้อมูล: <span id="chip-data"></span></span>
+    </div>
+  </div>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip" id="kpi-strip"></div>
+
+  <!-- NON LTA -->
+  <div class="sec-label sl-green">
+    <i class="ti ti-heartbeat" style="font-size:13px;" aria-hidden="true"></i>
+    NON LTA — วันปลอดอุบัติเหตุหยุดงาน (Days without Lost Time Accident)
+  </div>
+  <div class="plant-cards" id="plant-cards"></div>
+
+  <!-- NON LTA CHART -->
+  <div class="chart-card">
+    <div class="chart-hd">วันสะสม เทียบ เป้าหมาย — Days Accumulated vs Targets</div>
+    <div class="chart-sub">ข้อมูล ณ เมื่อวาน</div>
+    <div class="legend-row">
+      <span class="leg-item"><span class="leg-sq" style="background:var(--green);"></span>RESULT (วันสะสม)</span>
+      <span class="leg-item"><span class="leg-sq" style="background:var(--amber);opacity:.7;"></span>Target Mid</span>
+      <span class="leg-item"><span class="leg-sq" style="background:var(--blue);opacity:.6;"></span>Target End</span>
+      <span class="leg-item"><span class="leg-sq" style="background:var(--text3);"></span>Best Record</span>
+    </div>
+    <div style="position:relative;height:200px;"><canvas id="compChart" role="img" aria-label="แผนภูมิวันสะสมเทียบเป้าหมาย"></canvas></div>
+  </div>
+
+  <!-- ACCIDENT STATS -->
+  <div class="sec-label sl-red" style="margin-top:.25rem;">
+    <i class="ti ti-chart-bar" style="font-size:13px;" aria-hidden="true"></i>
+    สถิติอุบัติเหตุ ปี 2026 — Accident Statistics YTD
+  </div>
+  <div class="chart-card" style="margin-bottom:1.5rem;">
+    <div class="acc-tbl-wrap">
+      <table class="acc-tbl">
+        <thead>
+          <tr>
+            <th>โรงงาน</th>
+            <th style="color:var(--red);">LTA</th>
+            <th style="color:var(--amber);">MTC</th>
+            <th style="color:var(--blue);">FAC</th>
+            <th style="color:var(--text2);">Property</th>
+            <th style="color:var(--purple);">Near Miss</th>
+            <th style="color:var(--green);">รวม</th>
+          </tr>
+        </thead>
+        <tbody id="acc-stats-tbody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:1rem;">
+      <div class="legend-row">
+        <span class="leg-item"><span class="leg-sq" style="background:#dc2626;"></span>LTA — Lost Time Accident</span>
+        <span class="leg-item"><span class="leg-sq" style="background:#ea580c;"></span>MTC — Medical Treatment</span>
+        <span class="leg-item"><span class="leg-sq" style="background:#ca8a04;"></span>FAC — First Aid Case</span>
+        <span class="leg-item"><span class="leg-sq" style="background:#2563eb;"></span>Property Damage</span>
+        <span class="leg-item"><span class="leg-sq" style="background:#7c3aed;"></span>Near Miss / Incident</span>
+      </div>
+      <div style="position:relative;height:160px;"><canvas id="accChart" role="img" aria-label="แผนภูมิสถิติอุบัติเหตุ"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ENV -->
+  <div class="sec-label sl-env">
+    <i class="ti ti-leaf" style="font-size:13px;" aria-hidden="true"></i>
+    ข้อร้องเรียนด้านสิ่งแวดล้อม — Environmental Complaints
+  </div>
+  <div class="env-grid" id="env-cards"></div>
+
+  <!-- BOTTOM STRIP -->
+  <div class="bot-strip" id="bot-strip"></div>
+</div>
+
+<!-- ============ LTA FORM ============ -->
+<div id="view-lta-form" class="view">
+  <div class="page-header">
+    <div class="page-title-block">
+      <div class="page-title"><i class="ti ti-alert-triangle" style="color:var(--red);" aria-hidden="true"></i> บันทึกอุบัติเหตุ LTA</div>
+      <div class="page-sub">เมื่อเกิดอุบัติเหตุหยุดงาน ระบบจะ Reset วันนับใหม่โดยอัตโนมัติ</div>
+    </div>
+  </div>
+  <div class="alert-box alert-success" id="lta-alert-ok"><i class="ti ti-circle-check" aria-hidden="true"></i> <span id="lta-alert-msg"></span></div>
+  <div class="form-card">
+    <h3><i class="ti ti-building-factory-2" style="font-size:15px;" aria-hidden="true"></i> ข้อมูลอุบัติเหตุ LTA</h3>
+    <div class="info-box info-amber"><i class="ti ti-info-circle" aria-hidden="true"></i><span><strong>วิธีใช้:</strong> เมื่อเกิดอุบัติเหตุที่ทำให้พนักงานต้องหยุดงาน ให้กรอกฟอร์มนี้ ระบบจะ Reset วันนับใหม่โดยอัตโนมัติ และอัปเดต Best Record ให้อัตโนมัติหากทำลายสถิติ</span></div>
+    <div class="form-grid three">
+      <div class="form-group"><label>โรงงาน *</label>
+        <div class="glove-select-wrap"><select id="lta-plant"><option value="">-- เลือกโรงงาน --</option><option>SBP</option><option>SMC</option><option>SNP</option></select></div></div>
+      <div class="form-group"><label>วันที่เกิดเหตุ *</label><input type="date" id="lta-date"></div>
+      <div class="form-group"><label>ประเภท</label>
+        <div class="glove-select-wrap"><select id="lta-type"><option value="LTA">LTA (หยุดงาน)</option><option value="RWC">RWC (ปรับเปลี่ยนงาน)</option><option value="MTC">MTC (รักษาพยาบาล)</option></select></div></div>
+      <div class="form-group"><label>ชื่อ-สกุลผู้บาดเจ็บ</label><input type="text" id="lta-person" placeholder="ระบุชื่อ (ถ้ามี)"></div>
+      <div class="form-group"><label>ส่วนงาน / แผนก</label><input type="text" id="lta-dept" placeholder="เช่น ฝ่ายผลิต"></div>
+      <div class="form-group"><label>ส่วนร่างกายที่บาดเจ็บ</label><input type="text" id="lta-body" placeholder="เช่น มือขวา"></div>
+      <div class="form-group full"><label>สาเหตุ / รายละเอียด *</label><textarea id="lta-desc" placeholder="อธิบายเหตุการณ์ สาเหตุ การกระทำที่ไม่ปลอดภัย"></textarea></div>
+      <div class="form-group full"><label>การแก้ไข / Corrective Action</label><textarea id="lta-action" placeholder="มาตรการป้องกันและการแก้ไข"></textarea></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveLTA()"><i class="ti ti-device-floppy" aria-hidden="true"></i> บันทึกและ Reset วันนับ</button>
+      <button class="btn" onclick="clearLTAForm()">ล้างฟอร์ม</button>
+    </div>
+  </div>
+  <div class="form-card">
+    <h3><i class="ti ti-clock-edit" style="font-size:15px;" aria-hidden="true"></i> แก้ไขวันนับด้วยตนเอง</h3>
+    <div class="info-box info-blue"><i class="ti ti-info-circle" aria-hidden="true"></i><span>ใช้กรณีต้องการแก้ไขวันที่ LTA ครั้งล่าสุดโดยตรง (ป้อนข้อมูลย้อนหลัง หรือแก้ไขผิดพลาด)</span></div>
+    <div class="form-grid three">
+      <div class="form-group"><label>โรงงาน</label>
+        <div class="glove-select-wrap"><select id="manual-plant"><option>SBP</option><option>SMC</option><option>SNP</option></select></div></div>
+      <div class="form-group"><label>วัน LTA ล่าสุด (ใหม่)</label><input type="date" id="manual-date"></div>
+      <div class="form-group" style="justify-content:flex-end;padding-top:18px;">
+        <button class="btn btn-primary" onclick="saveManual()" style="width:100%;"><i class="ti ti-refresh" aria-hidden="true"></i> อัปเดตวันนับ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ACC FORM ============ -->
+<div id="view-acc-form" class="view">
+  <div class="page-header">
+    <div class="page-title-block">
+      <div class="page-title"><i class="ti ti-notes-medical" style="color:var(--amber);" aria-hidden="true"></i> บันทึกอุบัติเหตุ MTC / FAC / Property / Near Miss</div>
+      <div class="page-sub">บันทึกอุบัติเหตุที่ไม่ถึงขั้นหยุดงาน — ข้อมูลจะแสดงในแดชบอร์ดทันที</div>
+    </div>
+  </div>
+  <div class="alert-box alert-success" id="acc-alert-ok"><i class="ti ti-circle-check" aria-hidden="true"></i> <span id="acc-alert-msg"></span></div>
+  <div class="form-card">
+    <h3><i class="ti ti-shield-exclamation" style="font-size:15px;color:var(--amber);" aria-hidden="true"></i> ข้อมูลอุบัติเหตุ</h3>
+    <div class="info-box info-amber"><i class="ti ti-info-circle" aria-hidden="true"></i><span><strong>วิธีใช้:</strong> กรอกข้อมูลอุบัติเหตุที่ไม่ถึงขั้นหยุดงาน ข้อมูลจะสะสมและแสดงในตาราง Accident Statistics บนแดชบอร์ด</span></div>
+    <div class="form-grid three">
+      <div class="form-group"><label>โรงงาน *</label>
+        <div class="glove-select-wrap"><select id="acc-plant"><option value="">-- เลือก --</option><option>SBP</option><option>SMC</option><option>SNP</option></select></div></div>
+      <div class="form-group"><label>วันที่เกิดเหตุ *</label><input type="date" id="acc-date"></div>
+      <div class="form-group"><label>ประเภทอุบัติเหตุ *</label>
+        <div class="glove-select-wrap"><select id="acc-type">
+          <option value="MTC">MTC — รักษาพยาบาล (Medical Treatment)</option>
+          <option value="FAC">FAC — ปฐมพยาบาล (First Aid Case)</option>
+          <option value="Property">Property Damage — ความเสียหายทรัพย์สิน</option>
+          <option value="NearMiss">Near Miss / Incident</option>
+        </select></div>
+      </div>
+      <div class="form-group"><label>ชื่อ-สกุลผู้บาดเจ็บ (ถ้ามี)</label><input type="text" id="acc-person" placeholder="ระบุชื่อ"></div>
+      <div class="form-group"><label>ส่วนงาน / แผนก</label><input type="text" id="acc-dept" placeholder="เช่น ฝ่ายผลิต"></div>
+      <div class="form-group"><label>ส่วนร่างกาย (ถ้ามี)</label><input type="text" id="acc-body" placeholder="เช่น มือขวา"></div>
+      <div class="form-group"><label>มูลค่าความเสียหาย (บาท)</label><input type="number" id="acc-damage" placeholder="0" min="0"></div>
+      <div class="form-group"><label>สถานะ</label>
+        <div class="glove-select-wrap"><select id="acc-status"><option value="treated">ดำเนินการแล้ว</option><option value="ongoing">กำลังดำเนินการ</option></select></div></div>
+      <div class="form-group"></div>
+      <div class="form-group full"><label>สาเหตุ / รายละเอียด *</label><textarea id="acc-desc" placeholder="อธิบายเหตุการณ์ สาเหตุ การกระทำที่ไม่ปลอดภัย"></textarea></div>
+      <div class="form-group full"><label>การแก้ไข / Corrective Action</label><textarea id="acc-action" placeholder="มาตรการป้องกันและการแก้ไข"></textarea></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveAcc()"><i class="ti ti-device-floppy" aria-hidden="true"></i> บันทึกอุบัติเหตุ</button>
+      <button class="btn" onclick="clearAccForm()">ล้างฟอร์ม</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ENV FORM ============ -->
+<div id="view-env-form" class="view">
+  <div class="page-header">
+    <div class="page-title-block">
+      <div class="page-title"><i class="ti ti-message-report" style="color:var(--blue);" aria-hidden="true"></i> บันทึกข้อร้องเรียนสิ่งแวดล้อม</div>
+      <div class="page-sub">หลังแก้ไขเสร็จให้อัปเดตสถานะเป็น "ปิด" เพื่อให้แดชบอร์ดแสดงผลถูกต้อง</div>
+    </div>
+  </div>
+  <div class="alert-box alert-success" id="env-alert-ok"><i class="ti ti-circle-check" aria-hidden="true"></i> <span id="env-alert-msg"></span></div>
+  <div class="form-card">
+    <h3><i class="ti ti-leaf" style="font-size:15px;color:#4ade80;" aria-hidden="true"></i> ข้อมูลข้อร้องเรียน</h3>
+    <div class="info-box info-green"><i class="ti ti-info-circle" aria-hidden="true"></i><span>กรอกทุกครั้งที่มีข้อร้องเรียนเข้ามา และอัปเดตสถานะเมื่อดำเนินการแก้ไขเสร็จสิ้น</span></div>
+    <div class="form-grid three">
+      <div class="form-group"><label>โรงงาน *</label>
+        <div class="glove-select-wrap"><select id="env-plant"><option value="">-- เลือก --</option><option>SBP</option><option>SMC</option><option>SNP</option></select></div></div>
+      <div class="form-group"><label>วันที่รับเรื่อง *</label><input type="date" id="env-date"></div>
+      <div class="form-group"><label>ประเภทข้อร้องเรียน *</label>
+        <div class="glove-select-wrap"><select id="env-type">
+          <option value="เสียงรบกวน">🔊 เสียงรบกวน</option>
+          <option value="กลิ่น">💨 กลิ่น</option>
+          <option value="ฝุ่นละออง">☁️ ฝุ่นละออง</option>
+          <option value="น้ำเสีย">💧 น้ำเสีย</option>
+          <option value="ของเสีย">🗑️ ของเสีย / สารเคมี</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select></div>
+      </div>
+      <div class="form-group"><label>แหล่งที่มาของผู้ร้องเรียน</label>
+        <div class="glove-select-wrap"><select id="env-source"><option value="ชุมชน">ชุมชนใกล้เคียง</option><option value="หน่วยงานราชการ">หน่วยงานราชการ</option><option value="พนักงาน">พนักงานภายใน</option><option value="อื่นๆ">อื่นๆ</option></select></div></div>
+      <div class="form-group"><label>สถานะ</label>
+        <div class="glove-select-wrap"><select id="env-status"><option value="open">เปิด (กำลังดำเนินการ)</option><option value="closed">ปิด (แก้ไขแล้ว)</option></select></div></div>
+      <div class="form-group"><label>วันที่ปิดเรื่อง</label><input type="date" id="env-close-date"></div>
+      <div class="form-group full"><label>รายละเอียดข้อร้องเรียน</label><textarea id="env-desc" placeholder="อธิบายข้อร้องเรียนที่ได้รับ สถานที่ ลักษณะปัญหา"></textarea></div>
+      <div class="form-group full"><label>มาตรการแก้ไข / การตอบสนอง</label><textarea id="env-action" placeholder="สิ่งที่ดำเนินการแก้ไขหรือตอบสนองต่อผู้ร้องเรียน"></textarea></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEnv()"><i class="ti ti-device-floppy" aria-hidden="true"></i> บันทึกข้อร้องเรียน</button>
+      <button class="btn" onclick="clearEnvForm()">ล้างฟอร์ม</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TARGET FORM ============ -->
+<div id="view-target-form" class="view">
+  <div class="page-header">
+    <div class="page-title-block">
+      <div class="page-title"><i class="ti ti-target" style="color:var(--green);" aria-hidden="true"></i> ตั้งเป้าหมาย / ข้อมูลโรงงาน</div>
+      <div class="page-sub">แก้ไขค่าเป้าหมาย วัน LTA ล่าสุด และ Best Record ของแต่ละโรงงาน</div>
+    </div>
+  </div>
+  <div class="alert-box alert-success" id="target-alert-ok"><i class="ti ti-circle-check" aria-hidden="true"></i> บันทึกเป้าหมายเรียบร้อยแล้ว</div>
+  <div id="target-cards-area"></div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="saveTargets()"><i class="ti ti-device-floppy" aria-hidden="true"></i> บันทึกเป้าหมายทั้งหมด</button>
+  </div>
+</div>
+
+<!-- ============ LOG ============ -->
+<div id="view-log" class="view">
+  <div class="page-header">
+    <div class="page-title-block">
+      <div class="page-title"><i class="ti ti-list-details" style="font-size:20px;" aria-hidden="true"></i> ประวัติเหตุการณ์ทั้งหมด</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <div class="glove-select-wrap"><select id="log-filter" style="font-size:12px;padding:5px 8px;border-radius:var(--r-md);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);" onchange="renderLog()">
+        <option value="all">ทุกประเภท</option>
+        <option value="lta">LTA</option>
+        <option value="acc">MTC / FAC / Property / Near Miss</option>
+        <option value="env">สิ่งแวดล้อม</option>
+      </select></div>
+      <div class="glove-select-wrap"><select id="log-plant-filter" style="font-size:12px;padding:5px 8px;border-radius:var(--r-md);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);" onchange="renderLog()">
+        <option value="all">ทุกโรงงาน</option>
+        <option>SBP</option><option>SMC</option><option>SNP</option>
+      </select></div>
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="log-table-wrap">
+      <table class="log-tbl">
+        <thead><tr><th>วันที่</th><th>โรงงาน</th><th>ประเภท</th><th>รายละเอียด</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody id="log-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ======= DATA =======
+const DEFAULT_PLANTS = [
+  { name:'SBP', lastLTA:'2026-04-12', best:222, targetMid:110, targetEnd:302, color:'#16a34a' },
+  { name:'SMC', lastLTA:'2024-10-25', best:607, targetMid:583, targetEnd:766, color:'#3b82f6' },
+  { name:'SNP', lastLTA:'2025-06-06', best:383, targetMid:359, targetEnd:542, color:'#ea6600' },
+];
+const ENV_CATS = {
+  SBP:['เสียงรบกวน','กลิ่น','ฝุ่นละออง','น้ำเสีย'],
+  SMC:['เสียงรบกวน','กลิ่น','ฝุ่นละออง','ของเสีย'],
+  SNP:['เสียงรบกวน','กลิ่น','ฝุ่นละออง','น้ำเสีย'],
+};
+const CAT_ICONS = {'เสียงรบกวน':'ti-volume-off','กลิ่น':'ti-wind','ฝุ่นละออง':'ti-cloud','น้ำเสีย':'ti-droplet-off','ของเสีย':'ti-trash-off'};
+
+function loadState() {
+  try {
+    return {
+      plants: JSON.parse(localStorage.getItem('se_plants_v4') || 'null') || JSON.parse(JSON.stringify(DEFAULT_PLANTS)),
+      events: JSON.parse(localStorage.getItem('se_events_v4') || '[]'),
+    };
+  } catch(e) { return { plants: JSON.parse(JSON.stringify(DEFAULT_PLANTS)), events: [] }; }
+}
+function saveState(s) {
+  localStorage.setItem('se_plants_v4', JSON.stringify(s.plants));
+  localStorage.setItem('se_events_v4', JSON.stringify(s.events));
+}
+
+let state = loadState();
+let chartInst = null, accChartInst = null;
+
+// ======= DATES — report TODAY, data from YESTERDAY =======
+const reportDate = new Date(); reportDate.setHours(0,0,0,0);
+const dataDate = new Date(reportDate); dataDate.setDate(dataDate.getDate() - 1);
+
+function daysFrom(ds) {
+  const d = new Date(ds); d.setHours(0,0,0,0);
+  return Math.max(0, Math.floor((dataDate - d) / 86400000));
+}
+function fmtTH(d, full) {
+  return d.toLocaleDateString('th-TH', full
+    ? {weekday:'long', day:'numeric', month:'long', year:'numeric'}
+    : {day:'numeric', month:'short', year:'2-digit'});
+}
+function todayISO() { return reportDate.toISOString().slice(0,10); }
+function yesterdayISO() { return dataDate.toISOString().slice(0,10); }
+
+// ======= NAV =======
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'"+id+"'")) btn.classList.add('active');
+  });
+  if(id==='dashboard') renderDashboard();
+  if(id==='log') renderLog();
+  if(id==='target-form') renderTargetForm();
+  document.querySelectorAll('.alert-box').forEach(a => a.style.display='none');
+}
+
+function setDef(id, val) { const e=document.getElementById(id); if(e&&!e.value) e.value=val; }
+
+// ======= DASHBOARD =======
+function renderDashboard() {
+  // Date chips
+  document.getElementById('chip-today').textContent = fmtTH(reportDate, true);
+  document.getElementById('chip-data').textContent = fmtTH(dataDate, false);
+
+  // Plant cards
+  const cardsEl = document.getElementById('plant-cards');
+  cardsEl.innerHTML = '';
+  let totalDays = 0;
+  const rings = [];
+
+  state.plants.forEach((p, idx) => {
+    const days = daysFrom(p.lastLTA);
+    totalDays += days;
+    const pct = Math.min(100, Math.round(days / p.targetEnd * 100));
+    const beatEnd = days >= p.targetEnd, beatMid = days >= p.targetMid, beatBest = days >= p.best;
+
+    let tagCls = 'tag-red', tagIcon = 'ti-flame', tagLabel = 'กำลังสะสม';
+    if(beatEnd)      { tagCls='tag-green'; tagIcon='ti-trophy'; tagLabel='✨ บรรลุเป้าหมาย'; }
+    else if(beatBest){ tagCls='tag-green'; tagIcon='ti-star'; tagLabel='🏆 สถิติใหม่!'; }
+    else if(beatMid) { tagCls='tag-amber'; tagIcon='ti-trending-up'; tagLabel='ผ่านเป้ากลาง'; }
+
+    cardsEl.innerHTML += `
+      <div class="plant-card">
+        <div class="plant-glow" style="background:${p.color};"></div>
+        <div class="plant-header">
+          <div class="plant-name-row">
+            <div class="plant-icon" style="background:${p.color}22;">
+              <i class="ti ti-building-factory-2" style="color:${p.color};font-size:17px;" aria-hidden="true"></i>
+            </div>
+            <div>
+              <div class="plant-lbl">${p.name}</div>
+              <div class="plant-sub">Last LTA: ${fmtTH(new Date(p.lastLTA), false)}</div>
+            </div>
+          </div>
+          <div class="ring-wrap">
+            <canvas id="ring-${p.name}" role="img" aria-label="${p.name} progress ${pct}%"></canvas>
+            <div class="ring-pct">
+              <span class="ring-pct-num" style="color:${p.color};">${pct}%</span>
+              <span class="ring-pct-lbl">เป้าปลาย</span>
+            </div>
+          </div>
+        </div>
+        <div class="days-block">
+          <div class="days-big" style="color:${p.color};">${days.toLocaleString()}</div>
+          <div class="days-unit">วันปลอดภัย (Safe Days)</div>
+        </div>
+        <div class="meta-grid">
+          <div class="meta-cell">
+            <div class="meta-v">${p.targetMid}</div>
+            <div class="meta-k">Target Mid</div>
+          </div>
+          <div class="meta-cell">
+            <div class="meta-v">${p.targetEnd}</div>
+            <div class="meta-k">Target End</div>
+          </div>
+          <div class="meta-cell">
+            <div class="meta-v" style="color:${p.color};">${p.best}</div>
+            <div class="meta-k">Best Record</div>
+          </div>
+        </div>
+        <div class="prog-track">
+          <div class="prog-bar" style="width:${pct}%;background:linear-gradient(90deg,${p.color},${p.color}bb);"></div>
+        </div>
+        <span class="status-tag ${tagCls}">
+          <i class="ti ${tagIcon}" style="font-size:11px;" aria-hidden="true"></i>${tagLabel}
+        </span>
+      </div>`;
+    rings.push({ id: `ring-${p.name}`, pct, color: p.color });
+  });
+
+  // Draw ring charts after DOM
+  setTimeout(() => {
+    rings.forEach(r => {
+      const canvas = document.getElementById(r.id);
+      if(!canvas) return;
+      new Chart(canvas, {
+        type:'doughnut',
+        data:{ datasets:[{ data:[r.pct, 100-r.pct], backgroundColor:[r.color, 'rgba(0,0,0,0.06)'], borderWidth:0, borderRadius:4 }] },
+        options:{ cutout:'72%', plugins:{legend:{display:false},tooltip:{enabled:false}}, animation:{duration:800} }
+      });
+    });
+  }, 50);
+
+  // NON LTA CHART
+  if(chartInst){ chartInst.destroy(); chartInst=null; }
+  const cd = state.plants.map(p=>daysFrom(p.lastLTA));
+  chartInst = new Chart(document.getElementById('compChart'), {
+    type:'bar',
+    data:{
+      labels: state.plants.map(p=>p.name),
+      datasets:[
+        { label:'RESULT', data:cd, backgroundColor:state.plants.map(p=>p.color+'cc'), borderRadius:6, borderSkipped:false },
+        { label:'Target Mid', data:state.plants.map(p=>p.targetMid), backgroundColor:'rgba(251,191,36,0.35)', borderRadius:6, borderSkipped:false },
+        { label:'Target End', data:state.plants.map(p=>p.targetEnd), backgroundColor:'rgba(96,165,250,0.3)', borderRadius:6, borderSkipped:false },
+        { label:'Best Record', data:state.plants.map(p=>p.best), backgroundColor:'rgba(107,108,122,0.35)', borderRadius:6, borderSkipped:false },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y} วัน` } } },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#9899a8',font:{size:13,weight:'600'}} },
+        y:{ grid:{color:'rgba(0,0,0,0.05)'}, ticks:{color:'#9899a8',font:{size:11}} }
+      }
+    }
+  });
+
+  // KPI STRIP
+  document.getElementById('kpi-strip').innerHTML = '';
+  const ltaAll = state.events.filter(e=>e.type==='lta'&&new Date(e.date).getFullYear()===reportDate.getFullYear()).length;
+  const accAll = state.events.filter(e=>e.type==='acc'&&new Date(e.date).getFullYear()===reportDate.getFullYear()).length;
+  const envOpen = state.events.filter(e=>e.type==='env'&&e.status==='open').length;
+  const kpis = [
+    { icon:'ti-shield', bg:'rgba(22,163,74,0.12)', ic:'var(--green)', val:totalDays.toLocaleString()+' วัน', key:'รวมวันปลอดภัย', cls:'kpi-green' },
+    { icon:'ti-alert-triangle', bg:'rgba(240,82,82,0.12)', ic:'var(--red)', val:ltaAll+' ครั้ง', key:'LTA ปีนี้ (YTD)', cls:'kpi-red', vc: ltaAll>0?'var(--red)':'var(--green)' },
+    { icon:'ti-notes-medical', bg:'rgba(251,191,36,0.12)', ic:'var(--amber)', val:accAll+' ครั้ง', key:'อุบัติเหตุอื่นๆ (YTD)', cls:'kpi-amber' },
+    { icon:'ti-leaf', bg:'rgba(74,222,128,0.1)', ic:'#4ade80', val:envOpen+' เรื่อง', key:'ข้อร้องเรียนสิ่งแวดล้อม', cls:'kpi-blue', vc: envOpen>0?'var(--red)':'#4ade80' },
+  ];
+  kpis.forEach(k => {
+    document.getElementById('kpi-strip').innerHTML += `
+      <div class="kpi-card ${k.cls}">
+        <div class="kpi-icon" style="background:${k.bg};"><i class="ti ${k.icon}" style="color:${k.ic};" aria-hidden="true"></i></div>
+        <div class="kpi-val" style="color:${k.vc||'var(--text)'};">${k.val}</div>
+        <div class="kpi-key">${k.key}</div>
+      </div>`;
+  });
+
+  // ACC STATS TABLE + CHART
+  const curYear = reportDate.getFullYear();
+  const accEvt = state.events.filter(e=>e.type==='acc'&&new Date(e.date).getFullYear()===curYear);
+  const ltaEvt = state.events.filter(e=>e.type==='lta'&&new Date(e.date).getFullYear()===curYear);
+  const PLANTS = ['SBP','SMC','SNP'];
+  const ATYPES = ['LTA','MTC','FAC','Property','NearMiss'];
+  const ALABELS = ['LTA','MTC','FAC','Property Damage','Near Miss'];
+  const ACOLORS = ['var(--red)','var(--amber)','var(--blue)','var(--text2)','var(--purple)'];
+  const ATCLS = ['tc-red','tc-orange','tc-yellow','tc-blue','tc-purple'];
+
+  function cntAcc(plant, type) {
+    if(type==='LTA') return ltaEvt.filter(e=>e.plant===plant).length;
+    return accEvt.filter(e=>e.plant===plant&&e.accType===type).length;
+  }
+
+  let grandTotal = 0;
+  const tbody = document.getElementById('acc-stats-tbody');
+  if(tbody) {
+    const colTotals = ATYPES.map(t => PLANTS.reduce((a,p)=>a+cntAcc(p,t),0));
+    grandTotal = colTotals.reduce((a,b)=>a+b,0);
+    tbody.innerHTML = PLANTS.map(plant => {
+      const counts = ATYPES.map(t=>cntAcc(plant,t));
+      const tot = counts.reduce((a,b)=>a+b,0);
+      return `<tr>
+        <td>${plant}</td>
+        ${counts.map((c,i)=>`<td class="${c===0?'tc-zero':ATCLS[i]}">${c===0?'–':c}</td>`).join('')}
+        <td class="${tot>0?'tc-green':'tc-zero'}">${tot===0?'–':tot}</td>
+      </tr>`;
+    }).join('') + `<tr class="total-row">
+      <td>รวม</td>
+      ${colTotals.map((c,i)=>`<td class="${c===0?'tc-zero':ATCLS[i]}">${c===0?'–':c}</td>`).join('')}
+      <td class="${grandTotal>0?'tc-green':'tc-zero'}">${grandTotal===0?'–':grandTotal}</td>
+    </tr>`;
+  }
+
+  if(accChartInst){ accChartInst.destroy(); accChartInst=null; }
+  accChartInst = new Chart(document.getElementById('accChart'), {
+    type:'bar',
+    data:{
+      labels: PLANTS,
+      datasets: ATYPES.map((t,i)=>({
+        label: ALABELS[i],
+        data: PLANTS.map(p=>cntAcc(p,t)),
+        backgroundColor: ['rgba(220,38,38,.85)','rgba(234,88,12,.85)','rgba(234,179,8,.85)','rgba(37,99,235,.85)','rgba(124,58,237,.85)'][i],
+        borderRadius:4, borderSkipped:false,
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, position:'bottom', labels:{color:'#9899a8',boxWidth:10,font:{size:11}} }, tooltip:{ callbacks:{ label: ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y}` } } },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#9899a8',font:{size:12,weight:'600'}} },
+        y:{ grid:{color:'rgba(0,0,0,0.05)'}, ticks:{stepSize:1,color:'#9899a8',font:{size:11}} }
+      }
+    }
+  });
+
+  // ENV CARDS
+  const openComplaints = state.events.filter(e=>e.type==='env'&&e.status==='open');
+  const envEl = document.getElementById('env-cards');
+  envEl.innerHTML = '';
+  ['SBP','SMC','SNP'].forEach(plant => {
+    const openForPlant = openComplaints.filter(e=>e.plant===plant);
+    const count = openForPlant.length;
+    const cats = ENV_CATS[plant]||[];
+    const catsHtml = cats.map(c => {
+      const cc = openForPlant.filter(e=>e.envType===c).length;
+      return `<div class="env-cat-row">
+        <span class="env-cat-nm"><i class="ti ${CAT_ICONS[c]||'ti-check'}" style="font-size:12px;" aria-hidden="true"></i>${c}</span>
+        <span style="font-weight:600;color:${cc>0?'var(--red)':'#4ade80'};">${cc}</span>
+      </div>`;
+    }).join('');
+    const badge = count===0
+      ? `<span class="env-badge-zero">✓ ปลอดภัย</span>`
+      : `<span class="env-badge-warn">⚠ ${count} เรื่อง</span>`;
+    envEl.innerHTML += `
+      <div class="env-card">
+        <div class="env-top">
+          <span class="env-plant-nm"><i class="ti ti-building-factory-2" style="font-size:13px;" aria-hidden="true"></i>${plant}</span>
+          ${badge}
+        </div>
+        <div class="env-zero-num" style="color:${count>0?'var(--red)':'#4ade80'};">${count}</div>
+        <div class="env-zero-lbl">ข้อร้องเรียนที่เปิดอยู่ (Open Complaints)</div>
+        <div>${catsHtml}</div>
+      </div>`;
+  });
+
+  // BOTTOM STRIP
+  const totalOpen = openComplaints.length;
+  document.getElementById('bot-strip').innerHTML = `
+    <div class="bot-item"><div class="bot-icon" style="background:rgba(34,212,126,.12);"><i class="ti ti-shield" style="color:var(--green);" aria-hidden="true"></i></div><div><div class="bot-v">${totalDays.toLocaleString()} วัน</div><div class="bot-k">รวมวันปลอดภัย (3 โรงงาน)</div></div></div>
+    <div class="bot-div"></div>
+    <div class="bot-item"><div class="bot-icon" style="background:rgba(240,82,82,.12);"><i class="ti ti-alert-triangle" style="color:var(--red);" aria-hidden="true"></i></div><div><div class="bot-v" style="color:${ltaAll>0?'var(--red)':'var(--green)'};">${ltaAll} ครั้ง</div><div class="bot-k">LTA ปีนี้ (YTD ${curYear})</div></div></div>
+    <div class="bot-div"></div>
+    <div class="bot-item"><div class="bot-icon" style="background:rgba(74,222,128,.1);"><i class="ti ti-leaf" style="color:#4ade80;" aria-hidden="true"></i></div><div><div class="bot-v" style="color:${totalOpen>0?'var(--red)':'#4ade80'};">${totalOpen} เรื่อง</div><div class="bot-k">ข้อร้องเรียนสิ่งแวดล้อม (เปิดอยู่)</div></div></div>
+    <div class="bot-div"></div>
+    <div class="bot-item"><div class="bot-icon" style="background:rgba(96,165,250,.12);"><i class="ti ti-building-factory-2" style="color:var(--blue);" aria-hidden="true"></i></div><div><div class="bot-v">SBP · SMC · SNP</div><div class="bot-k">3 พื้นที่ดูแล</div></div></div>
+    <div class="bot-div"></div>
+    <div class="bot-item"><div class="bot-icon" style="background:rgba(251,191,36,.12);"><i class="ti ti-database" style="color:var(--amber);" aria-hidden="true"></i></div><div><div class="bot-v" style="color:var(--amber);">${fmtTH(dataDate,false)}</div><div class="bot-k">ข้อมูล ณ วันที่ (Data as of)</div></div></div>`;
+}
+
+// ======= LTA FORM =======
+function saveLTA() {
+  const plant=document.getElementById('lta-plant').value;
+  const date=document.getElementById('lta-date').value;
+  const type=document.getElementById('lta-type').value;
+  const person=document.getElementById('lta-person').value;
+  const dept=document.getElementById('lta-dept').value;
+  const body=document.getElementById('lta-body').value;
+  const desc=document.getElementById('lta-desc').value;
+  const action=document.getElementById('lta-action').value;
+  if(!plant||!date){ showAlert('lta-alert-ok','กรุณาเลือกโรงงานและวันที่',false); return; }
+  if(!desc){ showAlert('lta-alert-ok','กรุณากรอกรายละเอียด',false); return; }
+  const plantObj = state.plants.find(p=>p.name===plant);
+  if(plantObj) {
+    const prevDays = daysFrom(plantObj.lastLTA);
+    if(prevDays > plantObj.best) plantObj.best = prevDays;
+    plantObj.lastLTA = date;
+  }
+  state.events.push({ id:Date.now(), type:'lta', plant, date, ltaType:type, person, dept, body, desc, action, status:'lta', createdAt:new Date().toISOString() });
+  saveState(state);
+  document.getElementById('lta-alert-msg').textContent = `บันทึก ${type} — ${plant} (${fmtTH(new Date(date),false)}) เรียบร้อย วันนับ Reset แล้ว`;
+  document.getElementById('lta-alert-ok').style.display = 'block';
+  clearLTAForm();
+}
+function saveManual() {
+  const plant=document.getElementById('manual-plant').value;
+  const date=document.getElementById('manual-date').value;
+  if(!plant||!date){ alert('กรุณาเลือกโรงงานและวันที่'); return; }
+  const plantObj=state.plants.find(p=>p.name===plant);
+  if(plantObj) plantObj.lastLTA=date;
+  saveState(state);
+  document.getElementById('lta-alert-msg').textContent = `อัปเดตวัน LTA ล่าสุดของ ${plant} → ${fmtTH(new Date(date),false)} เรียบร้อย`;
+  document.getElementById('lta-alert-ok').style.display = 'block';
+}
+function clearLTAForm() {
+  ['lta-plant','lta-date','lta-type','lta-person','lta-dept','lta-body','lta-desc','lta-action'].forEach(id => { const e=document.getElementById(id); if(e.tagName==='SELECT') e.selectedIndex=0; else e.value=''; });
+}
+
+// ======= ACC FORM =======
+function saveAcc() {
+  const plant=document.getElementById('acc-plant').value;
+  const date=document.getElementById('acc-date').value;
+  const accType=document.getElementById('acc-type').value;
+  const person=document.getElementById('acc-person').value;
+  const dept=document.getElementById('acc-dept').value;
+  const body=document.getElementById('acc-body').value;
+  const damage=document.getElementById('acc-damage').value;
+  const status=document.getElementById('acc-status').value;
+  const desc=document.getElementById('acc-desc').value;
+  const action=document.getElementById('acc-action').value;
+  if(!plant||!date){ showAlert('acc-alert-ok','กรุณาเลือกโรงงานและวันที่',false); return; }
+  if(!desc){ showAlert('acc-alert-ok','กรุณากรอกรายละเอียด',false); return; }
+  state.events.push({ id:Date.now(), type:'acc', plant, date, accType, person, dept, body, damage, status, desc, action, createdAt:new Date().toISOString() });
+  saveState(state);
+  const lbl={MTC:'MTC',FAC:'FAC',Property:'Property Damage',NearMiss:'Near Miss'}[accType]||accType;
+  document.getElementById('acc-alert-msg').textContent = `บันทึก ${lbl} ของ ${plant} (${fmtTH(new Date(date),false)}) เรียบร้อย`;
+  document.getElementById('acc-alert-ok').style.display = 'block';
+  clearAccForm();
+}
+function clearAccForm() {
+  ['acc-plant','acc-type','acc-status'].forEach(id=>document.getElementById(id).selectedIndex=0);
+  ['acc-date','acc-person','acc-dept','acc-body','acc-damage','acc-desc','acc-action'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ======= ENV FORM =======
+function saveEnv() {
+  const plant=document.getElementById('env-plant').value;
+  const date=document.getElementById('env-date').value;
+  const envType=document.getElementById('env-type').value;
+  const source=document.getElementById('env-source').value;
+  const status=document.getElementById('env-status').value;
+  const closeDate=document.getElementById('env-close-date').value;
+  const desc=document.getElementById('env-desc').value;
+  const action=document.getElementById('env-action').value;
+  if(!plant||!date){ showAlert('env-alert-ok','กรุณาเลือกโรงงานและวันที่',false); return; }
+  state.events.push({ id:Date.now(), type:'env', plant, date, envType, source, status, closeDate, desc, action, createdAt:new Date().toISOString() });
+  saveState(state);
+  document.getElementById('env-alert-msg').textContent = `บันทึกข้อร้องเรียน "${envType}" ของ ${plant} เรียบร้อย`;
+  document.getElementById('env-alert-ok').style.display = 'block';
+  clearEnvForm();
+}
+function clearEnvForm() {
+  ['env-plant','env-type','env-source','env-status'].forEach(id=>document.getElementById(id).selectedIndex=0);
+  ['env-date','env-close-date','env-desc','env-action'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ======= TARGET FORM =======
+function renderTargetForm() {
+  const area=document.getElementById('target-cards-area');
+  area.innerHTML='';
+  state.plants.forEach(p=>{
+    area.innerHTML+=`
+      <div class="tgt-card">
+        <h3><i class="ti ti-building-factory-2" style="font-size:15px;color:${p.color};" aria-hidden="true"></i>${p.name}</h3>
+        <div class="form-grid three">
+          <div class="form-group"><label>วัน LTA ล่าสุด</label><input type="date" id="tgt-${p.name}-lastLTA" value="${p.lastLTA}"></div>
+          <div class="form-group"><label>Target Mid (วัน)</label><input type="number" id="tgt-${p.name}-mid" value="${p.targetMid}" min="1"></div>
+          <div class="form-group"><label>Target End (วัน)</label><input type="number" id="tgt-${p.name}-end" value="${p.targetEnd}" min="1"></div>
+          <div class="form-group"><label>Best Record (วัน)</label><input type="number" id="tgt-${p.name}-best" value="${p.best}" min="1"></div>
+          <div class="form-group"><label>สีประจำโรงงาน (Hex)</label><input type="text" id="tgt-${p.name}-color" value="${p.color}"></div>
+        </div>
+      </div>`;
+  });
+}
+function saveTargets() {
+  state.plants.forEach(p=>{
+    const g=id=>document.getElementById('tgt-'+p.name+'-'+id);
+    p.lastLTA=g('lastLTA').value||p.lastLTA;
+    p.targetMid=parseInt(g('mid').value)||p.targetMid;
+    p.targetEnd=parseInt(g('end').value)||p.targetEnd;
+    p.best=parseInt(g('best').value)||p.best;
+    p.color=g('color').value||p.color;
+  });
+  saveState(state);
+  const el=document.getElementById('target-alert-ok');
+  el.style.display='block';
+  setTimeout(()=>el.style.display='none',3000);
+}
+
+// ======= LOG =======
+function renderLog() {
+  const typeF=document.getElementById('log-filter').value;
+  const plantF=document.getElementById('log-plant-filter').value;
+  let events=[...state.events].reverse();
+  if(typeF!=='all') events=events.filter(e=>e.type===typeF);
+  if(plantF!=='all') events=events.filter(e=>e.plant===plantF);
+  const tbody=document.getElementById('log-tbody');
+  if(!events.length){ tbody.innerHTML='<tr class="empty-row"><td colspan="6"><i class="ti ti-inbox" style="font-size:24px;display:block;margin:0 auto 6px;" aria-hidden="true"></i>ยังไม่มีข้อมูล</td></tr>'; return; }
+  tbody.innerHTML = events.map(e=>{
+    let typeBadge, statusBadge, detail;
+    if(e.type==='lta'){
+      typeBadge=`<span class="badge badge-lta"><i class="ti ti-alert-triangle" style="font-size:11px;" aria-hidden="true"></i> ${e.ltaType||'LTA'}</span>`;
+      statusBadge=`<span class="badge badge-lta">LTA</span>`;
+      detail=(e.person?e.person+' · ':'')+(e.dept||'')+(e.desc?' — '+e.desc.slice(0,40)+(e.desc.length>40?'…':''):'');
+    } else if(e.type==='acc'){
+      const lbl={MTC:'MTC',FAC:'FAC',Property:'Property',NearMiss:'Near Miss'}[e.accType]||e.accType;
+      const bg={MTC:'var(--amber-bg)',FAC:'var(--blue-bg)',Property:'rgba(107,108,122,.15)',NearMiss:'var(--purple-bg)'}[e.accType]||'var(--bg3)';
+      const cl={MTC:'var(--amber)',FAC:'var(--blue)',Property:'var(--text2)',NearMiss:'var(--purple)'}[e.accType]||'var(--text2)';
+      typeBadge=`<span class="badge" style="background:${bg};color:${cl};"><i class="ti ti-notes-medical" style="font-size:11px;" aria-hidden="true"></i> ${lbl}</span>`;
+      statusBadge=e.status==='ongoing'?`<span class="badge badge-open">กำลังดำเนินการ</span>`:`<span class="badge badge-close">เสร็จสิ้น</span>`;
+      detail=(e.person?e.person+' · ':'')+(e.dept||'')+(e.desc?' — '+e.desc.slice(0,40)+(e.desc.length>40?'…':''):'');
+    } else {
+      typeBadge=`<span class="badge" style="background:var(--blue-bg);color:var(--blue);"><i class="ti ti-leaf" style="font-size:11px;" aria-hidden="true"></i> สิ่งแวดล้อม</span>`;
+      statusBadge=e.status==='open'?`<span class="badge badge-open">เปิด</span>`:`<span class="badge badge-close">ปิด</span>`;
+      detail=(e.envType||'')+(e.source?' · '+e.source:'')+(e.desc?' — '+e.desc.slice(0,40)+(e.desc.length>40?'…':''):'');
+    }
+    return `<tr>
+      <td>${fmtTH(new Date(e.date),false)}</td>
+      <td><strong>${e.plant}</strong></td>
+      <td>${typeBadge}</td>
+      <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);">${detail}</td>
+      <td>${statusBadge}</td>
+      <td><button class="btn btn-danger" style="padding:3px 10px;font-size:11px;" onclick="deleteEvent(${e.id})"><i class="ti ti-trash" style="font-size:12px;" aria-hidden="true"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+function deleteEvent(id){ if(!confirm('ลบรายการนี้?')) return; state.events=state.events.filter(e=>e.id!==id); saveState(state); renderLog(); }
+
+function showAlert(id, msg, ok=true) {
+  const el=document.getElementById(id);
+  el.className='alert-box '+(ok?'alert-success':'alert-danger');
+  const sp=el.querySelector('span'); if(sp) sp.textContent=msg; else el.textContent=msg;
+  el.style.display='block';
+  setTimeout(()=>el.style.display='none',5000);
+}
+
+// ======= INIT =======
+const t=todayISO();
+['lta-date','env-date','manual-date','acc-date'].forEach(id=>setDef(id,t));
+renderDashboard();
+</script>
+</body>
+</html>
